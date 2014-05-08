@@ -2,6 +2,7 @@ from glob import glob
 from os import path, makedirs, remove
 from shutil import copyfileobj, rmtree
 from distutils.version import LooseVersion
+from operator import itemgetter
 
 from zope.interface import implements
 
@@ -31,10 +32,13 @@ class FilesystemEggStorage(object):
         return version, open(self._eggpath(project, version), 'rb')
 
     def list(self, project):
-        eggdir = path.join(self.basedir, project)
-        versions = [path.splitext(path.basename(x))[0] \
-            for x in glob("%s/*.egg" % eggdir)]
-        return sorted(versions, key=LooseVersion)
+        eggts, eggdir = [], path.join(self.basedir, project)
+        for eggfile in glob("%s/*.egg" % eggdir):
+            eggts.append((path.getmtime(eggfile), eggfile))
+        eggts.sort(key=itemgetter(0))
+        versions = [path.splitext(path.basename(x[1]))[0] \
+                    for x in eggts]
+        return versions
 
     def delete(self, project, version=None):
         if version is None:
