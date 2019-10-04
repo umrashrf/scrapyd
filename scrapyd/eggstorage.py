@@ -1,16 +1,16 @@
+import re
 from glob import glob
 from os import path, makedirs, remove
 from shutil import copyfileobj, rmtree
 from distutils.version import LooseVersion
 from operator import itemgetter
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from .interfaces import IEggStorage
 
+@implementer(IEggStorage)
 class FilesystemEggStorage(object):
-
-    implements(IEggStorage)
 
     def __init__(self, config):
         self.basedir = config.get('eggs_dir', 'eggs')
@@ -49,5 +49,6 @@ class FilesystemEggStorage(object):
                 self.delete(project)
 
     def _eggpath(self, project, version):
-        x = path.join(self.basedir, project, "%s.egg" % version)
+        sanitized_version = re.sub(r'[^a-zA-Z0-9_-]', '_', version)
+        x = path.join(self.basedir, project, "%s.egg" % sanitized_version)
         return x

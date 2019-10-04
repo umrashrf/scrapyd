@@ -1,3 +1,12 @@
+import sys
+
+try:
+    from setuptools import setup
+    using_setuptools = True
+except ImportError:
+    from distutils.core import setup
+    using_setuptools = False
+
 from os.path import join, dirname
 
 with open(join(dirname(__file__), 'scrapyd/VERSION')) as f:
@@ -14,12 +23,15 @@ setup_args = {
     'maintainer_email': 'info@scrapy.org',
     'license': 'BSD',
     'packages': ['scrapyd'],
-    'scripts': ['bin/scrapyd', 'bin/scrapyd-deploy'],
     'include_package_data': True,
+    'zip_safe': False,
     'classifiers': [
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Development Status :: 5 - Production/Stable',
@@ -29,11 +41,18 @@ setup_args = {
     ],
 }
 
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+
+if using_setuptools:
+    setup_args['install_requires'] = [
+        'Twisted>=8.0',
+        'Scrapy>=1.0',
+        'six',
+        'enum-compat',
+    ]
+    setup_args['entry_points'] = {'console_scripts': [
+        'scrapyd = scrapyd.scripts.scrapyd_run:main'
+    ]}
 else:
-    setup_args['install_requires'] = ['Twisted>=8.0', 'Scrapy>=0.17']
+    setup_args['scripts'] = ['scrapyd/scripts/scrapyd_run.py']
 
 setup(**setup_args)

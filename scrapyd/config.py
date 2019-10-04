@@ -1,7 +1,8 @@
 import glob
-from cStringIO import StringIO
+import io
 from pkgutil import get_data
-from ConfigParser import SafeConfigParser, NoSectionError, NoOptionError
+from six.moves.configparser import SafeConfigParser, NoSectionError, NoOptionError
+from os.path import expanduser
 
 from scrapy.utils.conf import closest_scrapy_cfg
 
@@ -14,12 +15,16 @@ class Config(object):
     def __init__(self, values=None, extra_sources=()):
         if values is None:
             sources = self._getsources()
-            default_config = get_data(__package__, 'default_scrapyd.conf')
+            default_config = get_data(__package__, 'default_scrapyd.conf').decode('utf8')
             self.cp = SafeConfigParser()
-            self.cp.readfp(StringIO(default_config))
-            self.cp.read(sources)
-            for fp in extra_sources:
-                self.cp.readfp(fp)
+            self.cp.readfp(io.StringIO(default_config))
+            sources.extend(extra_sources)
+            for fname in sources:
+                try:
+                    with io.open(fname) as fp:
+                        self.cp.readfp(fp)
+                except (IOError, OSError):
+                    pass
         else:
             self.cp = SafeConfigParser(values)
             self.cp.add_section(self.SECTION)
@@ -28,6 +33,7 @@ class Config(object):
         sources = ['/etc/scrapyd/scrapyd.conf', r'c:\scrapyd\scrapyd.conf']
         sources += sorted(glob.glob('/etc/scrapyd/conf.d/*'))
         sources += ['scrapyd.conf']
+        sources += [expanduser('~/.scrapyd.conf')]
         scrapy_cfg = closest_scrapy_cfg()
         if scrapy_cfg:
             sources.append(scrapy_cfg)
