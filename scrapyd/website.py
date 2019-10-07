@@ -25,7 +25,8 @@ class Root(resource.Resource):
         self.nodename = config.get('node_name', socket.gethostname())
         self.putChild(b'', Home(self, local_items))
         if logsdir:
-            self.putChild(b'logs', static.File(logsdir.encode('ascii', 'ignore'), 'text/plain'))
+            logsdir = config.get('logs_content_type') or 'text/plain'
+            self.putChild(b'logs', static.File(logsdir.encode('ascii', 'ignore'), logs_content_type))
         if local_items:
             self.putChild(b'items', static.File(itemsdir, 'text/plain'))
         self.putChild(b'jobs', Jobs(self, local_items))
